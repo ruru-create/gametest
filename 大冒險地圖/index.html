@@ -2,458 +2,286 @@
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>大冒險地圖</title>
-  <meta name="description" content="完成 5 個冒險關卡，收集所有憑證，解開最終大門！" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@700;900&display=swap" rel="stylesheet" />
   <style>
     :root {
-      --bg: #080e1c;
-      --panel: #111d34;
-      --panel-2: #1b2d4f;
-      --text: #fff7df;
-      --muted: #bfd0ea;
       --gold: #ffd166;
-      --gold-dark: #c89528;
       --green: #43d17d;
       --red: #ff6464;
       --blue: #63d3ff;
-      --purple: #c084fc;
-      --shadow: rgba(0, 0, 0, 0.45);
+      --muted: #bfd0ea;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      font-family: "Noto Sans TC", "Microsoft JhengHei", system-ui, sans-serif;
-      overflow-x: hidden;
+      background: #080e1c;
+      color: #fff;
+      font-family: "Microsoft JhengHei", system-ui, sans-serif;
+      overflow: hidden; /* Prevent scrolling since it's a full screen app */
+      user-select: none;
+      -webkit-user-select: none;
     }
 
-    /* ─── 星空 canvas ─── */
-    #starCanvas {
+    /* ─── 封面開場 ─── */
+    .cover-screen {
       position: fixed;
       inset: 0;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ─── 流光背景 ─── */
-    .bg-glow {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background:
-        radial-gradient(ellipse 60% 40% at 20% 10%, rgba(99, 211, 255, 0.10), transparent 60%),
-        radial-gradient(ellipse 50% 35% at 82% 12%, rgba(255, 209, 102, 0.12), transparent 55%),
-        radial-gradient(ellipse 40% 30% at 55% 85%, rgba(192, 132, 252, 0.08), transparent 55%);
-      animation: bgPulse 8s ease-in-out infinite alternate;
-    }
-
-    @keyframes bgPulse {
-      from { opacity: 0.7; }
-      to   { opacity: 1; }
-    }
-
-    /* ─── 版面 ─── */
-    .page {
-      position: relative;
-      z-index: 1;
-      width: min(1180px, calc(100% - 28px));
-      margin: 0 auto;
-      padding: 32px 0 56px;
-    }
-
-    /* ─── header ─── */
-    header {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 16px;
-      align-items: start;
-      margin-bottom: 32px;
-      padding-bottom: 22px;
-      border-bottom: 2px solid rgba(255, 209, 102, 0.22);
-    }
-
-    h1 {
-      font-size: clamp(44px, 7vw, 90px);
-      line-height: 1;
-      color: var(--gold);
-      text-shadow: 0 6px 0 rgba(0,0,0,0.38), 0 0 40px rgba(255,209,102,0.35);
-      letter-spacing: -1px;
-    }
-
-    .subtitle {
-      margin-top: 10px;
-      color: var(--muted);
-      font-size: clamp(15px, 2vw, 20px);
-      font-weight: 700;
-    }
-
-    /* ─── 右上角資訊群 ─── */
-    .header-info {
+      z-index: 100;
+      background: #000 url("cover.png") center center / cover no-repeat;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      gap: 10px;
-    }
-
-    .clear-button {
-      min-height: 42px;
-      border: 2px solid rgba(255,255,255,0.18);
-      border-radius: 999px;
-      padding: 8px 16px;
-      background: rgba(255,255,255,0.08);
-      color: var(--muted);
-      font: inherit;
-      font-weight: 900;
-      cursor: pointer;
-      transition: background 150ms, color 150ms;
-    }
-
-    .clear-button:hover { background: rgba(255,100,100,0.18); color: var(--red); border-color: var(--red); }
-
-    .timer-box {
-      padding: 8px 16px;
-      border: 2px solid rgba(99,211,255,0.35);
-      border-radius: 999px;
-      background: rgba(99,211,255,0.08);
-      color: var(--blue);
-      font-size: 15px;
-      font-weight: 900;
-      letter-spacing: 0.5px;
-    }
-
-    /* ─── 進度條 ─── */
-    .progress-wrap {
-      margin-bottom: 28px;
-    }
-
-    .progress-label {
-      display: flex;
-      justify-content: space-between;
       align-items: center;
-      margin-bottom: 8px;
-      font-size: 15px;
-      font-weight: 900;
-      color: var(--muted);
+      justify-content: flex-end;
+      padding-bottom: 8%;
+      cursor: pointer;
+      transition: opacity 800ms ease, visibility 800ms ease;
     }
 
-    .progress-label .prog-count {
-      color: var(--gold);
-      font-size: 19px;
-    }
-
-    .progress-track {
-      height: 14px;
-      border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      border: 2px solid rgba(255,255,255,0.1);
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, #43d17d, #63d3ff, #ffd166);
-      background-size: 200% 100%;
-      animation: shimmer 3s linear infinite;
-      transition: width 600ms cubic-bezier(0.34,1.56,0.64,1);
-    }
-
-    @keyframes shimmer {
-      0%   { background-position: 200% center; }
-      100% { background-position: -200% center; }
-    }
-
-    /* ─── 關卡卡片 ─── */
-    .levels {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 18px;
-      margin: 0 0 28px;
-    }
-
-    .level-card {
-      min-height: 240px;
-      display: grid;
-      align-content: center;
-      justify-items: center;
-      gap: 12px;
-      padding: 24px 20px;
-      border: 3px solid #2a3f6a;
-      border-radius: 16px;
-      background: linear-gradient(160deg, rgba(27,45,79,0.96), rgba(14,22,42,0.96));
-      color: var(--text);
-      text-decoration: none;
-      text-align: center;
-      box-shadow: 0 20px 44px var(--shadow), inset 0 0 0 2px rgba(255,255,255,0.05);
-      transition: transform 180ms cubic-bezier(0.34,1.56,0.64,1), border-color 180ms, box-shadow 180ms;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .level-card::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% -20%, rgba(255,209,102,0.08), transparent 55%);
+    .cover-screen.hidden {
       opacity: 0;
-      transition: opacity 180ms;
-    }
-
-    .level-card:hover::before { opacity: 1; }
-
-    .level-card:hover {
-      transform: translateY(-6px) scale(1.02);
-      border-color: var(--gold);
-      box-shadow: 0 28px 56px var(--shadow), 0 0 0 4px rgba(255,209,102,0.14);
-    }
-
-    .level-card.done {
-      border-color: var(--green);
-      background: linear-gradient(160deg, rgba(25,70,45,0.96), rgba(12,40,24,0.96));
-      box-shadow: 0 20px 44px var(--shadow), 0 0 0 5px rgba(67,209,125,0.12);
-    }
-
-    .level-card.done::before {
-      background: radial-gradient(circle at 50% -20%, rgba(67,209,125,0.08), transparent 55%);
-    }
-
-    .level-card.done:hover {
-      border-color: #6effa8;
-      box-shadow: 0 28px 56px var(--shadow), 0 0 0 5px rgba(67,209,125,0.22);
-    }
-
-    /* 鎖定狀態 */
-    .level-card.locked {
-      opacity: 0.52;
+      visibility: hidden;
       pointer-events: none;
-      filter: grayscale(0.6);
     }
 
-    .level-icon {
-      font-size: clamp(52px, 8vw, 88px);
-      line-height: 1;
-      filter: drop-shadow(0 8px 0 rgba(0,0,0,0.2));
-      transition: transform 180ms;
-    }
-
-    .level-card:hover .level-icon {
-      transform: scale(1.12) rotate(-3deg);
-    }
-
-    .level-num {
-      font-size: 12px;
+    .cover-hint {
+      font-size: clamp(20px, 3vw, 32px);
       font-weight: 900;
-      color: var(--muted);
-      letter-spacing: 1px;
-      text-transform: uppercase;
-    }
-
-    .level-name {
-      font-size: clamp(20px, 2.8vw, 26px);
-      font-weight: 900;
-    }
-
-    .level-status {
-      min-width: 110px;
-      padding: 5px 14px;
+      color: #fff;
+      text-shadow: 0 4px 8px rgba(0,0,0,0.8), 0 0 20px rgba(255,255,255,0.4);
+      animation: pulseText 1.5s infinite alternate;
+      background: rgba(0,0,0,0.4);
+      padding: 10px 24px;
       border-radius: 999px;
-      background: rgba(255,255,255,0.08);
-      color: var(--muted);
-      font-size: 14px;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+
+    @keyframes pulseText {
+      from { opacity: 0.6; transform: scale(0.98); }
+      to   { opacity: 1; transform: scale(1.02); }
+    }
+
+    /* ─── UI 浮動層 (右上角) ─── */
+    .top-ui {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(10, 16, 32, 0.75);
+      padding: 8px 16px;
+      border-radius: 999px;
+      border: 2px solid rgba(255, 209, 102, 0.3);
+      backdrop-filter: blur(4px);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+    }
+
+    .held-count {
+      color: var(--gold);
+      font-size: 18px;
       font-weight: 900;
+      letter-spacing: 1px;
     }
 
-    .level-card.done .level-status {
-      background: rgba(67,209,125,0.18);
-      color: #c9ffd9;
+    .btn-clear {
+      border: none;
+      background: rgba(255,100,100,0.2);
+      color: #ffbaba;
+      font-weight: 900;
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 150ms;
     }
 
-    /* 完成徽章 */
-    .done-badge {
+    .btn-clear:hover { background: rgba(255,100,100,0.4); }
+
+    /* ─── 大地圖容器 ─── */
+    .map-wrapper {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #080e1c;
+    }
+
+    .map-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      max-width: calc(100vh * (16 / 9));
+      max-height: calc(100vw * (9 / 16));
+    }
+
+    .map-bg-img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      pointer-events: none;
+    }
+
+    /* ─── 熱區 ─── */
+    .hotspot {
       position: absolute;
-      top: 12px;
-      right: 14px;
-      font-size: 22px;
-      animation: badgePop 400ms cubic-bezier(0.34,1.56,0.64,1) both;
+      cursor: pointer;
+      border-radius: 20%; /* 圓潤點 */
+      transition: background 200ms, box-shadow 200ms;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      /* 測試時可以把 border 打開看位置，完成後關掉 */
+      /* border: 2px dashed rgba(255,255,255,0.5); */ 
     }
 
-    @keyframes badgePop {
+    .hotspot:hover {
+      background: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 0 30px rgba(255, 255, 255, 0.4);
+    }
+
+    .stamp {
+      position: absolute;
+      top: 10%;
+      right: 10%;
+      font-size: clamp(30px, 4vw, 50px);
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.6));
+      display: none;
+      pointer-events: none;
+      animation: stampPop 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    @keyframes stampPop {
       from { transform: scale(0) rotate(-20deg); opacity: 0; }
       to   { transform: scale(1) rotate(0deg); opacity: 1; }
     }
 
-    /* ─── 通關大門 panel ─── */
-    .gate-panel {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 14px;
-      align-items: center;
-      justify-content: center;
-      padding: 22px;
-      border: 3px solid rgba(255,209,102,0.36);
-      border-radius: 16px;
-      background: rgba(10,14,28,0.65);
-      box-shadow: inset 0 0 0 2px rgba(255,255,255,0.05), 0 18px 42px rgba(0,0,0,0.3);
-    }
-
-    .door-button,
-    .again-button,
-    .close-button {
-      min-height: 48px;
-      border: 0;
-      border-radius: 999px;
-      padding: 10px 22px;
-      background: linear-gradient(180deg, #ffd166, #eb9f28);
-      color: #261707;
-      font: inherit;
-      font-weight: 900;
-      font-size: 16px;
-      cursor: pointer;
-      box-shadow: 0 6px 0 #8e5618;
-      transition: transform 120ms, box-shadow 120ms;
-    }
-
-    .door-button:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8e5618; }
-    .door-button:active { transform: translateY(3px); box-shadow: 0 3px 0 #8e5618; }
-
-    .held {
-      color: var(--gold);
-      font-size: 20px;
-      font-weight: 900;
-    }
+    .level-done .stamp { display: block; }
 
     /* ─── Modal ─── */
     .modal {
       position: fixed;
       inset: 0;
-      z-index: 40;
+      z-index: 60;
       display: none;
       place-items: center;
-      padding: 18px;
-      background: rgba(4,8,18,0.78);
-      backdrop-filter: blur(6px);
+      padding: 16px;
+      background: rgba(4,8,18,0.85);
+      backdrop-filter: blur(8px);
     }
 
     .modal.show { display: grid; }
 
-    .door {
-      width: min(900px, 100%);
-      max-height: calc(100vh - 36px);
-      overflow: auto;
-      padding: 26px;
+    .door-ui {
+      width: min(800px, 100%);
+      max-height: 95vh;
+      overflow-y: auto;
+      padding: 24px;
       border: 4px solid var(--gold);
-      border-radius: 18px;
-      background:
-        radial-gradient(circle at 50% 0%, rgba(255,209,102,0.18), transparent 38%),
-        linear-gradient(180deg, #1c2c48, #0c1425);
-      box-shadow: 0 32px 90px rgba(0,0,0,0.55), 0 0 0 6px rgba(255,209,102,0.08);
+      border-radius: 16px;
+      background: radial-gradient(circle at 50% 0%, rgba(255,209,102,0.18), transparent 45%), linear-gradient(180deg, #1c2c48, #0c1425);
+      box-shadow: 0 32px 90px rgba(0,0,0,0.6);
     }
 
     .door-head {
       display: flex;
       justify-content: space-between;
-      gap: 14px;
       align-items: center;
-      margin-bottom: 22px;
+      margin-bottom: 24px;
     }
 
-    .door h2, .complete h2 {
+    .door-head h2 {
       margin: 0;
       color: var(--gold);
-      font-size: clamp(28px, 5vw, 52px);
-      line-height: 1.1;
+      font-size: clamp(26px, 4vw, 42px);
     }
+
+    .close-btn {
+      background: rgba(255,255,255,0.1);
+      border: 2px solid rgba(255,255,255,0.2);
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .close-btn:hover { background: rgba(255,255,255,0.2); }
 
     .slots {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
     }
 
     .slot {
-      min-height: 130px;
+      min-height: 140px;
       display: grid;
       align-content: center;
       justify-items: center;
-      gap: 6px;
-      border: 3px dashed rgba(255,209,102,0.45);
+      gap: 8px;
+      border: 3px dashed rgba(255,209,102,0.4);
       border-radius: 12px;
-      background: rgba(255,255,255,0.04);
+      background: rgba(0,0,0,0.2);
       color: var(--muted);
       font-weight: 900;
-      font-size: 13px;
-      text-align: center;
       padding: 10px;
     }
 
-    .slot.over {
-      border-color: var(--blue);
-      box-shadow: 0 0 0 5px rgba(99,211,255,0.12);
-    }
+    .slot.over { border-color: var(--blue); box-shadow: 0 0 0 5px rgba(99,211,255,0.15); }
+    .slot.correct { border-style: solid; border-color: var(--green); background: rgba(67,209,125,0.15); color: #d8ffe4; }
+    .slot.wrong { animation: shake 0.3s ease; }
 
-    .slot.correct {
-      border-style: solid;
-      border-color: var(--green);
-      background: rgba(67,209,125,0.12);
-      color: #d8ffe4;
-    }
-
-    .slot.wrong {
-      animation: wrongFlash 300ms ease;
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); border-color: var(--red); background: rgba(255,100,100,0.2); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
     }
 
     .bag {
-      min-height: 130px;
       padding: 16px;
       border: 3px solid #2a3f6a;
       border-radius: 12px;
-      background: rgba(8,14,28,0.7);
+      background: rgba(0,0,0,0.4);
     }
 
     .bag-title {
-      margin-bottom: 12px;
       color: var(--gold);
       font-size: 18px;
       font-weight: 900;
+      margin-bottom: 12px;
     }
 
     .badges {
       display: flex;
       flex-wrap: wrap;
       gap: 12px;
-      min-height: 64px;
+      min-height: 60px;
       align-items: center;
     }
 
     .badge {
       min-width: 120px;
-      min-height: 54px;
-      display: inline-grid;
-      place-items: center;
-      padding: 7px 14px;
+      min-height: 50px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px 12px;
       border: 3px solid var(--gold);
       border-radius: 999px;
       background: #332410;
       color: var(--gold);
       font-weight: 900;
-      font-size: 14px;
       cursor: grab;
-      user-select: none;
       touch-action: none;
-      box-shadow: 0 8px 0 rgba(0,0,0,0.24);
+      box-shadow: 0 6px 0 rgba(0,0,0,0.3);
     }
 
     .badge:active { cursor: grabbing; }
-
     .badge.placed {
       border-color: var(--green);
       background: #173c27;
@@ -465,351 +293,213 @@
     .badge.dragging {
       position: fixed;
       left: 0; top: 0;
-      z-index: 60;
+      z-index: 70;
       pointer-events: none;
-      transform: translate3d(var(--drag-x), var(--drag-y), 0) scale(1.06);
-      opacity: 0.96;
+      transform: translate3d(var(--drag-x), var(--drag-y), 0) scale(1.05);
+      opacity: 0.95;
     }
 
     .placeholder {
       min-width: 120px;
-      min-height: 54px;
-      border: 3px dashed rgba(255,209,102,0.28);
+      min-height: 50px;
+      border: 3px dashed rgba(255,209,102,0.3);
       border-radius: 999px;
     }
 
-    .complete {
+    .complete-panel {
       display: none;
       text-align: center;
-      padding: 36px 16px 16px;
+      padding: 30px 10px;
     }
 
-    .complete.show {
-      display: block;
-      animation: completeGlow 900ms ease-out;
+    .complete-panel.show { display: block; animation: fadeUp 0.6s ease-out; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
-    .complete p {
-      color: var(--text);
-      font-size: 22px;
+    .complete-panel h2 { color: var(--gold); font-size: 42px; margin-bottom: 16px; }
+    .complete-panel p { font-size: 20px; font-weight: 900; margin-bottom: 24px; }
+    
+    .btn-again {
+      background: linear-gradient(180deg, #ffd166, #eb9f28);
+      color: #261707;
+      border: none;
+      padding: 12px 24px;
+      font-size: 18px;
       font-weight: 900;
-      margin: 12px 0 20px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #8e5618;
+      transition: transform 100ms, box-shadow 100ms;
     }
+    .btn-again:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8e5618; }
+    .btn-again:active { transform: translateY(3px); box-shadow: 0 3px 0 #8e5618; }
 
-    .empty-note { color: var(--muted); font-weight: 700; }
-
-    /* ─── Confetti canvas ─── */
-    #confettiCanvas {
-      position: fixed;
-      inset: 0;
-      z-index: 35;
-      pointer-events: none;
-      display: none;
-    }
-
-    /* ─── Keyframes ─── */
-    @keyframes wrongFlash {
-      35% { border-color: var(--red); background: rgba(255,100,100,0.2); transform: translateX(-6px); }
-      70% { transform: translateX(6px); }
-    }
-
-    @keyframes completeGlow {
-      50% { filter: drop-shadow(0 0 28px rgba(255,209,102,0.75)); }
-    }
-
-    /* ─── RWD ─── */
-    @media (max-width: 840px) {
-      .page { width: min(100% - 18px, 680px); padding-top: 20px; }
-      header { grid-template-columns: 1fr; }
-      .header-info { align-items: flex-start; }
-      .levels { grid-template-columns: repeat(2, 1fr); }
-      .slots { grid-template-columns: repeat(3, 1fr); }
-    }
-
-    @media (max-width: 540px) {
-      .levels { grid-template-columns: 1fr; }
-      .slots { grid-template-columns: repeat(2, 1fr); }
-      .door-head { flex-direction: column; align-items: flex-start; }
-    }
   </style>
 </head>
 <body>
-  <canvas id="starCanvas"></canvas>
-  <div class="bg-glow"></div>
-  <canvas id="confettiCanvas"></canvas>
 
-  <div class="page">
-    <header>
-      <div>
-        <h1>大冒險地圖</h1>
-        <p class="subtitle">完成 5 個關卡，集齊所有憑證，解開最終大門！</p>
-      </div>
-      <div class="header-info">
-        <button class="clear-button" id="clearButton" type="button">🔄 清除進度</button>
-        <div class="timer-box" id="timerBox">⏱ 計時中…</div>
-      </div>
-    </header>
+  <!-- 開場封面 -->
+  <div id="coverScreen" class="cover-screen">
+    <div class="cover-hint">點擊任何部位遊戲開始</div>
+  </div>
 
-    <div class="progress-wrap">
-      <div class="progress-label">
-        <span>冒險進度</span>
-        <span class="prog-count" id="progCount">0 / 5 關卡完成</span>
+  <!-- 地圖 UI -->
+  <div class="top-ui">
+    <div id="heldCount" class="held-count">持有：0 / 3</div>
+    <button id="clearBtn" class="btn-clear">🔄 清除進度</button>
+  </div>
+
+  <!-- 大地圖 -->
+  <div class="map-wrapper">
+    <div class="map-container">
+      <img src="map-bg.png" alt="Map Background" class="map-bg-img">
+      
+      <!-- 熱區：朝代 (依據提示: Top left) -->
+      <div class="hotspot" id="hs-dynasty" style="top: 15%; left: 8%; width: 22%; height: 26%;" data-level="dynasty">
+        <div class="stamp">✅</div>
       </div>
-      <div class="progress-track">
-        <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      
+      <!-- 熱區：成語 (依據提示: Top right) -->
+      <div class="hotspot" id="hs-idiom" style="top: 15%; left: 70%; width: 22%; height: 26%;" data-level="idiom">
+        <div class="stamp">✅</div>
+      </div>
+      
+      <!-- 熱區：打怪 (依據提示: Bottom left) -->
+      <div class="hotspot" id="hs-warrior" style="top: 60%; left: 12%; width: 22%; height: 26%;" data-level="warrior">
+        <div class="stamp">✅</div>
+      </div>
+      
+      <!-- 熱區：中央大門 (依據提示: Center) -->
+      <div class="hotspot" id="hs-gate" style="top: 38%; left: 38%; width: 24%; height: 32%;">
+      </div>
+    </div>
+  </div>
+
+  <!-- 通關大門 Modal -->
+  <div class="modal" id="doorModal">
+    <div class="door-ui" id="doorPuzzle">
+      <div class="door-head">
+        <h2>🔒 通關大門</h2>
+        <button class="close-btn" id="closeDoorBtn">✕ 關閉</button>
+      </div>
+
+      <div class="slots" id="slots"></div>
+
+      <div class="bag">
+        <div class="bag-title">🎒 背包欄</div>
+        <div class="badges" id="badges"></div>
       </div>
     </div>
 
-    <main>
-      <section class="levels" id="levels" aria-label="關卡列表"></section>
-
-      <section class="gate-panel">
-        <button class="door-button" id="doorButton" type="button">🔒 通關大門</button>
-        <div class="held" id="heldCount">目前持有：0 / 5</div>
-      </section>
-    </main>
-  </div>
-
-  <div class="modal" id="doorModal" role="dialog" aria-modal="true" aria-labelledby="doorTitle">
-    <section class="door">
-      <div id="doorPuzzle">
-        <div class="door-head">
-          <h2 id="doorTitle">⚔️ 通關大門</h2>
-          <button class="close-button" id="closeDoorButton" type="button">✕ 關閉</button>
-        </div>
-
-        <div class="slots" id="slots"></div>
-
-        <div class="bag">
-          <div class="bag-title">🎒 背包欄</div>
-          <div class="badges" id="badges"></div>
-        </div>
-      </div>
-
-      <div class="complete" id="completePanel">
-        <h2>🏆 冒險完成！</h2>
-        <p id="timeText">總冒險時長：00 分 00 秒</p>
-        <button class="again-button" id="againButton" type="button">🔄 再次冒險</button>
-      </div>
-    </section>
+    <div class="complete-panel" id="completePanel">
+      <h2>🏆 冒險完成！</h2>
+      <p id="timeText">總冒險時長：00 分 00 秒</p>
+      <button class="btn-again" id="againBtn">🔄 再次冒險</button>
+    </div>
   </div>
 
   <script>
     /* ═══════════════════════════════════════
-       關卡資料
+       關卡設定 (3 個)
     ═══════════════════════════════════════ */
     const LEVELS = [
-      { id: "dynasty",  name: "朝代配對",  icon: "🎴", certName: "朝代之印",  key: "cert_dynasty",  href: "../示範1_朝代配對/index.html",  slot: "朝代"  },
-      { id: "idiom",    name: "成語填字",  icon: "📝", certName: "成語之印",  key: "cert_idiom",    href: "../示範2_成語填字/index.html",  slot: "成語"  },
-      { id: "warrior",  name: "打怪 RPG", icon: "⚔️", certName: "勇者之印",  key: "cert_warrior",  href: "../示範3_打怪RPG/index.html",  slot: "勇者"  },
-      { id: "mole",     name: "打地鼠",   icon: "🐹", certName: "地鼠之印",  key: "cert_mole",     href: "../打地鼠/index.html",           slot: "地鼠"  },
-      { id: "ai",       name: "AI 能做什麼", icon: "🤖", certName: "智慧之印", key: "cert_ai",      href: "../AI 能做什麼/index.html",    slot: "智慧"  }
+      { id: "dynasty", name: "朝代配對", icon: "🎴", certName: "朝代之印", key: "cert_dynasty", href: "../示範1_朝代配對/index.html", slot: "朝代" },
+      { id: "idiom",   name: "成語填字", icon: "📝", certName: "成語之印", key: "cert_idiom",   href: "../示範2_成語填字/index.html", slot: "成語" },
+      { id: "warrior", name: "打怪 RPG", icon: "⚔️", certName: "勇者之印", key: "cert_warrior", href: "../示範3_打怪RPG/index.html", slot: "勇者" }
     ];
 
     const START_KEY = "adventure_start";
-    const TOTAL = LEVELS.length;
+    const COVER_SEEN_KEY = "cover_seen";
 
-    /* ─── DOM refs ─── */
-    const levelsEl      = document.querySelector("#levels");
-    const heldCount     = document.querySelector("#heldCount");
-    const clearButton   = document.querySelector("#clearButton");
-    const doorButton    = document.querySelector("#doorButton");
-    const doorModal     = document.querySelector("#doorModal");
-    const closeDoorButton = document.querySelector("#closeDoorButton");
-    const slotsEl       = document.querySelector("#slots");
-    const badgesEl      = document.querySelector("#badges");
-    const doorPuzzle    = document.querySelector("#doorPuzzle");
-    const completePanel = document.querySelector("#completePanel");
-    const timeText      = document.querySelector("#timeText");
-    const againButton   = document.querySelector("#againButton");
-    const progressFill  = document.querySelector("#progressFill");
-    const progCount     = document.querySelector("#progCount");
-    const timerBox      = document.querySelector("#timerBox");
+    /* ─── DOM ─── */
+    const coverScreen   = document.getElementById("coverScreen");
+    const topUi         = document.querySelector(".top-ui");
+    const heldCountText = document.getElementById("heldCount");
+    const clearBtn      = document.getElementById("clearBtn");
+    const againBtn      = document.getElementById("againBtn");
+    const doorModal     = document.getElementById("doorModal");
+    const closeDoorBtn  = document.getElementById("closeDoorBtn");
+    const slotsEl       = document.getElementById("slots");
+    const badgesEl      = document.getElementById("badges");
+    const doorPuzzle    = document.getElementById("doorPuzzle");
+    const completePanel = document.getElementById("completePanel");
+    const timeText      = document.getElementById("timeText");
 
     let activeDrag  = null;
     let placedCount = 0;
-    let timerInterval = null;
 
     /* ═══════════════════════════════════════
-       星空動畫
+       封面與初始化邏輯
     ═══════════════════════════════════════ */
-    (function initStars() {
-      const canvas = document.querySelector("#starCanvas");
-      const ctx    = canvas.getContext("2d");
-      let stars    = [];
-      let W, H;
-
-      function resize() {
-        W = canvas.width  = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-      }
-
-      function makeStars(n) {
-        stars = [];
-        for (let i = 0; i < n; i++) {
-          stars.push({
-            x:    Math.random() * W,
-            y:    Math.random() * H,
-            r:    Math.random() * 1.4 + 0.3,
-            a:    Math.random(),
-            da:   (Math.random() * 0.006 + 0.002) * (Math.random() < 0.5 ? 1 : -1),
-            speed: Math.random() * 0.04 + 0.01
-          });
-        }
-      }
-
-      function draw() {
-        ctx.clearRect(0, 0, W, H);
-        for (const s of stars) {
-          s.a += s.da;
-          if (s.a <= 0 || s.a >= 1) s.da *= -1;
-          s.y -= s.speed;
-          if (s.y < -2) { s.y = H + 2; s.x = Math.random() * W; }
-          ctx.beginPath();
-          ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-          ctx.fillStyle = `rgba(255,245,210,${s.a.toFixed(2)})`;
-          ctx.fill();
-        }
-        requestAnimationFrame(draw);
-      }
-
-      resize();
-      makeStars(220);
-      draw();
-      window.addEventListener("resize", () => { resize(); makeStars(220); });
-    })();
-
-    /* ═══════════════════════════════════════
-       Confetti 動畫
-    ═══════════════════════════════════════ */
-    const confettiCanvas = document.querySelector("#confettiCanvas");
-    const confettiCtx    = confettiCanvas.getContext("2d");
-    let confettiParticles = [];
-    let confettiRaf = null;
-
-    function launchConfetti() {
-      confettiCanvas.width  = window.innerWidth;
-      confettiCanvas.height = window.innerHeight;
-      confettiCanvas.style.display = "block";
-      confettiParticles = [];
-      const colors = ["#ffd166","#63d3ff","#43d17d","#c084fc","#ff6464","#fff7df"];
-      for (let i = 0; i < 180; i++) {
-        confettiParticles.push({
-          x:   Math.random() * confettiCanvas.width,
-          y:   -10 - Math.random() * 200,
-          vy:  3 + Math.random() * 5,
-          vx:  (Math.random() - 0.5) * 4,
-          rot: Math.random() * 360,
-          drot: (Math.random() - 0.5) * 6,
-          w:   8 + Math.random() * 8,
-          h:   5 + Math.random() * 5,
-          color: colors[Math.floor(Math.random() * colors.length)],
-          alpha: 1
+    function initCover() {
+      if (sessionStorage.getItem(COVER_SEEN_KEY)) {
+        coverScreen.classList.add("hidden");
+        ensureAdventureStart();
+      } else {
+        coverScreen.addEventListener("click", () => {
+          coverScreen.classList.add("hidden");
+          sessionStorage.setItem(COVER_SEEN_KEY, "true");
+          ensureAdventureStart();
         });
       }
-      function drawConfetti() {
-        confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-        confettiParticles = confettiParticles.filter(p => p.alpha > 0.01);
-        for (const p of confettiParticles) {
-          p.x   += p.vx;
-          p.y   += p.vy;
-          p.rot += p.drot;
-          if (p.y > confettiCanvas.height * 0.7) p.alpha -= 0.012;
-          confettiCtx.save();
-          confettiCtx.globalAlpha = p.alpha;
-          confettiCtx.translate(p.x, p.y);
-          confettiCtx.rotate((p.rot * Math.PI) / 180);
-          confettiCtx.fillStyle = p.color;
-          confettiCtx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-          confettiCtx.restore();
-        }
-        if (confettiParticles.length > 0) {
-          confettiRaf = requestAnimationFrame(drawConfetti);
-        } else {
-          confettiCanvas.style.display = "none";
-        }
-      }
-      if (confettiRaf) cancelAnimationFrame(confettiRaf);
-      confettiRaf = requestAnimationFrame(drawConfetti);
     }
 
-    /* ═══════════════════════════════════════
-       計時器
-    ═══════════════════════════════════════ */
     function ensureAdventureStart() {
       if (!localStorage.getItem(START_KEY)) {
         localStorage.setItem(START_KEY, String(Date.now()));
       }
     }
 
-    function formatTime(seconds) {
-      const m = Math.floor(seconds / 60);
-      const s = seconds % 60;
-      return `${String(m).padStart(2,"0")} 分 ${String(s).padStart(2,"0")} 秒`;
+    function hasCert(level) {
+      return localStorage.getItem(level.key) === "true" || localStorage.getItem(level.key) === "1";
     }
 
-    function startTimer() {
-      clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
-        const start   = Number(localStorage.getItem(START_KEY) || Date.now());
-        const elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
-        timerBox.textContent = `⏱ ${formatTime(elapsed)}`;
-      }, 1000);
+    function getOwnedLevels() {
+      return LEVELS.filter(hasCert);
     }
 
     /* ═══════════════════════════════════════
-       核心資料
+       熱區綁定與狀態更新
     ═══════════════════════════════════════ */
-    function hasCert(level)  { return localStorage.getItem(level.key) === "true" || localStorage.getItem(level.key) === "1"; }
-    function ownedLevels()   { return LEVELS.filter(hasCert); }
+    function updateMapState() {
+      const owned = getOwnedLevels();
+      heldCountText.textContent = `持有：${owned.length} / 3`;
 
-    /* ═══════════════════════════════════════
-       渲染地圖
-    ═══════════════════════════════════════ */
-    function renderMap() {
-      ensureAdventureStart();
-      levelsEl.innerHTML = "";
-      const owned = ownedLevels().length;
-
-      LEVELS.forEach((level, idx) => {
-        const done = hasCert(level);
-        const card = document.createElement("a");
-        card.className = `level-card${done ? " done" : ""}`;
-        card.href      = level.href;
-        card.innerHTML = `
-          ${done ? '<div class="done-badge">✅</div>' : ""}
-          <div class="level-num">關卡 ${idx + 1}</div>
-          <div class="level-icon">${level.icon}</div>
-          <div class="level-name">${level.name}</div>
-          <div class="level-status">${done ? "已完成 ✓" : "未完成"}</div>
-        `;
-        levelsEl.appendChild(card);
+      // 檢查熱區並更新 ✓ 狀態
+      LEVELS.forEach(lvl => {
+        const hs = document.getElementById(`hs-${lvl.id}`);
+        if (hs) {
+          if (hasCert(lvl)) hs.classList.add("level-done");
+          else hs.classList.remove("level-done");
+          
+          // 綁定跳轉事件
+          hs.onclick = () => { window.location.href = lvl.href; };
+        }
       });
 
-      heldCount.textContent   = `目前持有：${owned} / ${TOTAL}`;
-      progCount.textContent   = `${owned} / ${TOTAL} 關卡完成`;
-      progressFill.style.width = `${(owned / TOTAL) * 100}%`;
-
-      // 計時器顯示
-      const start   = Number(localStorage.getItem(START_KEY) || Date.now());
-      const elapsed = Math.max(0, Math.floor((Date.now() - start) / 1000));
-      timerBox.textContent = `⏱ ${formatTime(elapsed)}`;
-      startTimer();
+      // 中央大門熱區
+      document.getElementById("hs-gate").onclick = openDoor;
     }
 
-    /* ═══════════════════════════════════════
-       清除進度
-    ═══════════════════════════════════════ */
-    function clearProgress() {
-      if (!confirm("確定要清除所有進度？")) return;
+    function resetAllProgress() {
+      if (!confirm("確定要清除所有進度嗎？下次會從封面重新開始。")) return;
       localStorage.clear();
-      placedCount = 0;
-      renderMap();
-      closeDoor();
+      sessionStorage.clear();
+      window.location.reload();
     }
 
+    clearBtn.onclick = resetAllProgress;
+    againBtn.onclick = () => {
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    };
+
     /* ═══════════════════════════════════════
-       通關大門
+       大門 Modal 與拖曳解謎
     ═══════════════════════════════════════ */
     function openDoor() {
       placedCount = 0;
@@ -819,43 +509,47 @@
       doorModal.classList.add("show");
     }
 
-    function closeDoor() {
+    closeDoorBtn.onclick = () => {
       doorModal.classList.remove("show");
       cleanupDrag();
-    }
+    };
+
+    doorModal.onclick = (e) => {
+      if (e.target === doorModal) closeDoorBtn.click();
+    };
 
     function renderDoor() {
-      slotsEl.innerHTML  = "";
+      slotsEl.innerHTML = "";
       badgesEl.innerHTML = "";
 
-      LEVELS.forEach((level) => {
+      LEVELS.forEach(lvl => {
         const slot = document.createElement("div");
-        slot.className      = "slot";
-        slot.dataset.cert   = level.id;
-        slot.innerHTML      = `<div style="font-size:26px">${level.icon}</div><div>${level.slot}</div><small style="font-size:11px;color:var(--muted)">放入${level.certName}</small>`;
+        slot.className = "slot";
+        slot.dataset.cert = lvl.id;
+        slot.innerHTML = `<div style="font-size:28px">${lvl.icon}</div><div>${lvl.slot}</div>`;
         addSlotEvents(slot);
         slotsEl.appendChild(slot);
       });
 
-      const owned = ownedLevels();
+      const owned = getOwnedLevels();
       if (owned.length === 0) {
-        badgesEl.innerHTML = `<div class="empty-note">目前還沒有憑證，先去完成關卡吧！</div>`;
+        badgesEl.innerHTML = `<div style="color:var(--muted); font-size:14px">目前沒有憑證，去探索地圖上的關卡吧！</div>`;
         return;
       }
-      owned.forEach((level) => badgesEl.appendChild(createBadge(level)));
+      owned.forEach(lvl => badgesEl.appendChild(createBadge(lvl)));
     }
 
     function createBadge(level) {
       const badge = document.createElement("div");
-      badge.className     = "badge";
-      badge.draggable     = true;
-      badge.dataset.cert  = level.id;
-      badge.textContent   = `${level.icon} ${level.certName}`;
+      badge.className = "badge";
+      badge.draggable = true;
+      badge.dataset.cert = level.id;
+      badge.innerHTML = `<span style="font-size:20px;margin-right:6px">${level.icon}</span>${level.certName}`;
 
-      badge.addEventListener("dragstart", (ev) => {
-        if (badge.classList.contains("placed")) { ev.preventDefault(); return; }
-        ev.dataTransfer.effectAllowed = "move";
-        ev.dataTransfer.setData("text/plain", level.id);
+      badge.addEventListener("dragstart", (e) => {
+        if (badge.classList.contains("placed")) { e.preventDefault(); return; }
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", level.id);
         activeDrag = { badge };
       });
       badge.addEventListener("dragend", () => {
@@ -867,40 +561,39 @@
     }
 
     function addSlotEvents(slot) {
-      slot.addEventListener("dragover",  (ev) => { ev.preventDefault(); slot.classList.add("over"); });
-      slot.addEventListener("dragleave", ()   => slot.classList.remove("over"));
-      slot.addEventListener("drop",      (ev) => {
-        ev.preventDefault();
+      slot.addEventListener("dragover", e => { e.preventDefault(); slot.classList.add("over"); });
+      slot.addEventListener("dragleave", () => slot.classList.remove("over"));
+      slot.addEventListener("drop", e => {
+        e.preventDefault();
         slot.classList.remove("over");
-        const cert  = ev.dataTransfer.getData("text/plain");
+        const cert = e.dataTransfer.getData("text/plain");
         const badge = activeDrag?.badge || badgesEl.querySelector(`.badge[data-cert="${cert}"]`);
         tryPlaceBadge(badge, slot);
       });
     }
 
-    /* ─── Pointer drag ─── */
-    function startPointerDrag(ev) {
-      const badge = ev.currentTarget;
+    /* ─── 觸控拖曳 (Pointer Events) ─── */
+    function startPointerDrag(e) {
+      const badge = e.currentTarget;
       if (badge.classList.contains("placed")) return;
-      ev.preventDefault();
+      e.preventDefault();
       const rect = badge.getBoundingClientRect();
-      const ph   = document.createElement("span");
-      ph.className   = "placeholder";
+      const ph = document.createElement("span");
+      ph.className = "placeholder";
       ph.style.width = `${rect.width}px`;
-      ph.style.height= `${rect.height}px`;
+      ph.style.height = `${rect.height}px`;
       badge.parentElement.insertBefore(ph, badge);
-      badge.setPointerCapture(ev.pointerId);
+      badge.setPointerCapture(e.pointerId);
 
-      activeDrag = { badge, placeholder: ph, pointerId: ev.pointerId,
-                     offsetX: ev.clientX - rect.left, offsetY: ev.clientY - rect.top };
-      badge.style.width  = `${rect.width}px`;
+      activeDrag = { badge, placeholder: ph, pointerId: e.pointerId, offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top };
+      badge.style.width = `${rect.width}px`;
       badge.style.height = `${rect.height}px`;
       badge.classList.add("dragging");
-      moveBadge(ev.clientX, ev.clientY);
+      moveBadge(e.clientX, e.clientY);
 
-      badge.addEventListener("pointermove",  pointerMove);
-      badge.addEventListener("pointerup",    pointerUp);
-      badge.addEventListener("pointercancel",pointerCancel);
+      badge.addEventListener("pointermove", pointerMove);
+      badge.addEventListener("pointerup", pointerUp);
+      badge.addEventListener("pointercancel", pointerCancel);
     }
 
     function moveBadge(cx, cy) {
@@ -909,42 +602,37 @@
       activeDrag.badge.style.setProperty("--drag-y", `${cy - activeDrag.offsetY}px`);
     }
 
-    function pointerMove(ev) {
+    function pointerMove(e) {
       if (!activeDrag) return;
-      ev.preventDefault();
-      moveBadge(ev.clientX, ev.clientY);
+      e.preventDefault();
+      moveBadge(e.clientX, e.clientY);
       document.querySelectorAll(".slot.over").forEach(s => s.classList.remove("over"));
-      const slot = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".slot");
+      const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest(".slot");
       if (slot && !slot.classList.contains("correct")) slot.classList.add("over");
     }
 
-    function pointerUp(ev) {
+    function pointerUp(e) {
       if (!activeDrag) return;
-      const slot = document.elementFromPoint(ev.clientX, ev.clientY)?.closest(".slot");
+      const slot = document.elementFromPoint(e.clientX, e.clientY)?.closest(".slot");
       document.querySelectorAll(".slot.over").forEach(s => s.classList.remove("over"));
       if (slot) { tryPlaceBadge(activeDrag.badge, slot); return; }
       resetPointerBadge();
     }
 
     function pointerCancel() { resetPointerBadge(); }
-
     function cleanupDrag() { if (activeDrag?.badge) resetPointerBadge(); }
 
-    function removePointerListeners(badge) {
-      badge.removeEventListener("pointermove",  pointerMove);
-      badge.removeEventListener("pointerup",    pointerUp);
-      badge.removeEventListener("pointercancel",pointerCancel);
-    }
-
-    function resetBadgeStyle(badge) {
-      badge.classList.remove("dragging");
-      ["width","height","--drag-x","--drag-y"].forEach(p => badge.style.removeProperty(p));
+    function removePointerListeners(b) {
+      b.removeEventListener("pointermove", pointerMove);
+      b.removeEventListener("pointerup", pointerUp);
+      b.removeEventListener("pointercancel", pointerCancel);
     }
 
     function resetPointerBadge() {
       const { badge, placeholder } = activeDrag;
       removePointerListeners(badge);
-      resetBadgeStyle(badge);
+      badge.classList.remove("dragging");
+      ["width","height","--drag-x","--drag-y"].forEach(p => badge.style.removeProperty(p));
       placeholder?.replaceWith(badge);
       activeDrag = null;
     }
@@ -954,51 +642,42 @@
         if (activeDrag?.placeholder) resetPointerBadge();
         return;
       }
-      const isCorrect = badge.dataset.cert === slot.dataset.cert;
-      if (!isCorrect) {
-        slot.classList.remove("wrong");
-        void slot.offsetWidth;
-        slot.classList.add("wrong");
-        setTimeout(() => slot.classList.remove("wrong"), 320);
+      if (badge.dataset.cert !== slot.dataset.cert) {
+        slot.classList.remove("wrong"); void slot.offsetWidth; slot.classList.add("wrong");
+        setTimeout(() => slot.classList.remove("wrong"), 300);
         if (activeDrag?.placeholder) resetPointerBadge();
         return;
       }
+      
       if (activeDrag?.placeholder) {
         activeDrag.placeholder.remove();
         removePointerListeners(badge);
-        resetBadgeStyle(badge);
+        badge.classList.remove("dragging");
+        ["width","height","--drag-x","--drag-y"].forEach(p => badge.style.removeProperty(p));
         activeDrag = null;
       }
+
       badge.classList.add("placed");
       badge.draggable = false;
       slot.classList.add("correct");
-      slot.innerHTML  = "";
+      slot.innerHTML = "";
       slot.appendChild(badge);
-      placedCount += 1;
-      if (placedCount === ownedLevels().length && placedCount === TOTAL) {
-        setTimeout(showComplete, 450);
-      }
+      placedCount++;
+      if (placedCount === 3) setTimeout(showComplete, 400);
     }
 
     function showComplete() {
-      const start   = Number(localStorage.getItem(START_KEY) || Date.now());
-      const secs    = Math.max(0, Math.floor((Date.now() - start) / 1000));
-      const mins    = Math.floor(secs / 60);
-      const remain  = secs % 60;
-      timeText.textContent  = `總冒險時長：${String(mins).padStart(2,"0")} 分 ${String(remain).padStart(2,"0")} 秒`;
+      const start = Number(localStorage.getItem(START_KEY) || Date.now());
+      const secs = Math.max(0, Math.floor((Date.now() - start) / 1000));
+      timeText.textContent = `總冒險時長：${Math.floor(secs / 60).toString().padStart(2,"0")} 分 ${(secs % 60).toString().padStart(2,"0")} 秒`;
       doorPuzzle.style.display = "none";
       completePanel.classList.add("show");
-      launchConfetti();
     }
 
-    /* ─── 事件綁定 ─── */
-    clearButton.addEventListener("click", clearProgress);
-    doorButton.addEventListener("click", openDoor);
-    closeDoorButton.addEventListener("click", closeDoor);
-    againButton.addEventListener("click", clearProgress);
-    doorModal.addEventListener("click", (ev) => { if (ev.target === doorModal) closeDoor(); });
+    /* ─── 執行 ─── */
+    initCover();
+    updateMapState();
 
-    renderMap();
   </script>
 </body>
 </html>
