@@ -1,0 +1,831 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>打地鼠</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Kosugi+Maru&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --paper: #fff4d8;
+      --paper-deep: #f4d99f;
+      --ink: #4b321e;
+      --muted: #8a6849;
+      --wood: #8b572d;
+      --wood-dark: #563019;
+      --wood-light: #c18549;
+      --mole: #b9783d;
+      --mole-dark: #76431f;
+      --red: #e8463f;
+      --green: #329a5c;
+      --gold: #f8aa2b;
+      --shadow: rgba(82, 49, 18, 0.24);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 22px;
+      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 10% 18%, rgba(255, 255, 255, 0.72) 0 9%, transparent 10%),
+        radial-gradient(circle at 84% 11%, rgba(255, 255, 255, 0.66) 0 7%, transparent 8%),
+        linear-gradient(180deg, #f9dda9 0 44%, #ead08e 44% 100%);
+      color: var(--ink);
+      font-family: "Kosugi Maru", "Microsoft JhengHei", "Noto Sans TC", system-ui, sans-serif;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(100, 63, 31, 0.06) 1px, transparent 1px) 0 0 / 34px 34px,
+        linear-gradient(rgba(255, 255, 255, 0.16) 1px, transparent 1px) 0 0 / 34px 34px;
+      mix-blend-mode: multiply;
+    }
+
+    body.shake {
+      animation: screenShake 260ms ease-in-out;
+    }
+
+    .game {
+      position: relative;
+      width: min(780px, 100%);
+      padding: clamp(16px, 3vw, 26px);
+      border: 5px solid rgba(255, 255, 255, 0.92);
+      border-radius: 30px;
+      background:
+        radial-gradient(circle at 14% 18%, rgba(255, 255, 255, 0.55), transparent 19%),
+        linear-gradient(180deg, var(--paper), var(--paper-deep));
+      box-shadow: 0 24px 58px var(--shadow), inset 0 -8px 0 rgba(135, 87, 36, 0.09);
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 6vw, 60px);
+      line-height: 1;
+      letter-spacing: 0;
+      color: #68411f;
+      text-shadow: 0 4px 0 rgba(255, 255, 255, 0.7), 0 8px 0 rgba(204, 139, 56, 0.24);
+    }
+
+    .scoreboard {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .stat {
+      min-width: 108px;
+      padding: 9px 12px;
+      border: 3px solid rgba(255, 255, 255, 0.92);
+      border-radius: 19px;
+      background: rgba(255, 250, 237, 0.88);
+      box-shadow: inset 0 -5px 0 rgba(196, 126, 47, 0.16);
+      text-align: center;
+      font-weight: 900;
+    }
+
+    .stat span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 30px;
+      line-height: 1.1;
+    }
+
+    .time-card.warning {
+      animation: warningPulse 520ms ease-in-out infinite;
+      color: var(--red);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .hint {
+      margin: 0;
+      color: #76563a;
+      font-weight: 800;
+    }
+
+    .combo {
+      position: absolute;
+      top: 105px;
+      left: 50%;
+      z-index: 8;
+      min-width: 180px;
+      padding: 8px 14px;
+      border: 3px solid #fff;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #fff7cc, #ffd56d);
+      color: #c43e26;
+      text-align: center;
+      font-size: clamp(20px, 4vw, 34px);
+      font-weight: 900;
+      opacity: 0;
+      transform: translate(-50%, 8px) scale(0.82);
+      pointer-events: none;
+      text-shadow: 0 2px 0 #fff;
+    }
+
+    .combo.show {
+      animation: comboPop 820ms ease-out;
+    }
+
+    button {
+      min-height: 46px;
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 18px;
+      background: linear-gradient(180deg, #ffb84d, #f0882d);
+      color: #ffffff;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      box-shadow: 0 6px 0 #b7621d;
+      transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 0 #b7621d;
+      filter: saturate(1.08);
+    }
+
+    button:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 #b7621d;
+    }
+
+    button:disabled {
+      opacity: 0.72;
+      cursor: default;
+    }
+
+    .field {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(12px, 3vw, 22px);
+      padding: clamp(16px, 4vw, 30px);
+      border: 5px solid rgba(134, 92, 42, 0.45);
+      border-radius: 26px;
+      background:
+        radial-gradient(circle at 22% 22%, rgba(255, 255, 255, 0.5), transparent 11%),
+        radial-gradient(circle at 80% 68%, rgba(255, 255, 255, 0.36), transparent 13%),
+        linear-gradient(135deg, rgba(119, 151, 81, 0.28) 25%, transparent 25%) 0 0 / 34px 34px,
+        linear-gradient(180deg, #c9dc8d, #9bbf68);
+      box-shadow: inset 0 8px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .hole {
+      position: relative;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: end center;
+      border: 0;
+      border-radius: 50%;
+      background:
+        repeating-radial-gradient(ellipse at 50% 50%, transparent 0 12px, rgba(255, 224, 177, 0.16) 13px 16px),
+        radial-gradient(ellipse at center, var(--wood-dark) 0 40%, var(--wood) 41% 68%, var(--wood-light) 69% 100%);
+      box-shadow:
+        inset 0 16px 18px rgba(33, 18, 8, 0.42),
+        inset 0 -8px 0 rgba(255, 232, 181, 0.2),
+        0 9px 0 rgba(91, 111, 54, 0.48);
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .hole::before {
+      content: "";
+      position: absolute;
+      inset: 9% 10% 38%;
+      border-radius: 50%;
+      background:
+        linear-gradient(75deg, transparent 0 36%, rgba(255, 242, 208, 0.18) 37% 41%, transparent 42% 100%),
+        radial-gradient(ellipse at center, rgba(30, 16, 8, 0.82), rgba(38, 20, 9, 0.98));
+      pointer-events: none;
+    }
+
+    .hole::after {
+      content: "";
+      position: absolute;
+      inset: 66% 13% 10%;
+      border-radius: 50%;
+      background: rgba(45, 28, 10, 0.2);
+      pointer-events: none;
+    }
+
+    .mole {
+      position: absolute;
+      bottom: -76%;
+      left: 50%;
+      width: 79%;
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+      translate: -50% 0;
+      border-radius: 50% 50% 46% 46%;
+      background:
+        radial-gradient(circle at 34% 28%, rgba(255, 225, 182, 0.58) 0 12%, transparent 13%),
+        linear-gradient(180deg, #cf9253, var(--mole));
+      box-shadow:
+        inset 0 -10px 0 rgba(96, 56, 25, 0.2),
+        0 8px 0 rgba(0, 0, 0, 0.13);
+      font-size: clamp(42px, 10vw, 82px);
+      user-select: none;
+      pointer-events: none;
+      transform-origin: 50% 82%;
+      transition: bottom 220ms cubic-bezier(.19,1.32,.34,1);
+      z-index: 3;
+    }
+
+    .hole.up .mole {
+      bottom: 12%;
+      animation: moleBounce 360ms cubic-bezier(.16,1.34,.38,1), moleSway 760ms ease-in-out 380ms infinite;
+    }
+
+    .hole.hit .mole {
+      opacity: 0;
+    }
+
+    .flying-mole {
+      position: fixed;
+      z-index: 30;
+      width: var(--size);
+      height: var(--size);
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #cf9253, var(--mole));
+      font-size: calc(var(--size) * 0.72);
+      pointer-events: none;
+      animation: flyAway 680ms ease-out forwards;
+    }
+
+    .pop-text {
+      position: absolute;
+      top: 5%;
+      left: 50%;
+      translate: -50% 0;
+      padding: 3px 10px;
+      border: 3px solid #fff;
+      border-radius: 999px;
+      background: #fff7d1;
+      color: var(--green);
+      font-size: clamp(17px, 3vw, 26px);
+      font-weight: 900;
+      opacity: 0;
+      pointer-events: none;
+      z-index: 6;
+      text-shadow: 0 2px 0 #fff;
+    }
+
+    .hole.show-plus .pop-text.plus,
+    .hole.show-minus .pop-text.minus {
+      animation: floatScore 760ms ease-out;
+    }
+
+    .pop-text.minus {
+      color: var(--red);
+    }
+
+    .particle {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      z-index: 7;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--particle-color);
+      pointer-events: none;
+      animation: particleBurst 720ms ease-out forwards;
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 20px;
+      background: rgba(58, 36, 15, 0.48);
+      backdrop-filter: blur(4px);
+      z-index: 40;
+    }
+
+    .overlay.show {
+      display: grid;
+    }
+
+    .dialog {
+      width: min(430px, 100%);
+      padding: 28px;
+      border: 5px solid #fff;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at 16% 14%, rgba(255, 255, 255, 0.7), transparent 18%),
+        linear-gradient(180deg, #fff8df, #f6d98e);
+      text-align: center;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .dialog h2 {
+      margin: 0 0 8px;
+      color: #68411f;
+      font-size: 38px;
+      letter-spacing: 0;
+    }
+
+    .dialog p {
+      margin: 0 0 18px;
+      color: #725238;
+      font-size: 22px;
+      font-weight: 900;
+    }
+
+    @keyframes moleBounce {
+      0% { bottom: -76%; transform: scale(0.72, 1.16); }
+      68% { bottom: 18%; transform: scale(1.08, 0.9); }
+      100% { bottom: 12%; transform: scale(1); }
+    }
+
+    @keyframes moleSway {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    @keyframes flyAway {
+      0% { opacity: 1; transform: translate(-50%, -50%) rotate(0deg) scale(1); }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--fly-x)), calc(-50% - 170px)) rotate(760deg) scale(0.45); }
+    }
+
+    @keyframes floatScore {
+      0% { opacity: 0; translate: -50% 10px; scale: 0.72; }
+      20% { opacity: 1; scale: 1.15; }
+      100% { opacity: 0; translate: -50% -48px; scale: 1; }
+    }
+
+    @keyframes particleBurst {
+      0% { opacity: 1; transform: translate(-50%, -50%) scale(0.45); }
+      100% { opacity: 0; transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1.18); }
+    }
+
+    @keyframes comboPop {
+      0% { opacity: 0; transform: translate(-50%, 10px) scale(0.72) rotate(-3deg); }
+      18% { opacity: 1; transform: translate(-50%, -4px) scale(1.12) rotate(2deg); }
+      70% { opacity: 1; transform: translate(-50%, -8px) scale(1) rotate(-1deg); }
+      100% { opacity: 0; transform: translate(-50%, -24px) scale(0.92) rotate(0deg); }
+    }
+
+    @keyframes screenShake {
+      0%, 100% { transform: translate(0, 0); }
+      20% { transform: translate(-5px, 2px); }
+      40% { transform: translate(5px, -2px); }
+      60% { transform: translate(-3px, -1px); }
+      80% { transform: translate(3px, 1px); }
+    }
+
+    @keyframes warningPulse {
+      0%, 100% { background: rgba(255, 250, 237, 0.9); box-shadow: inset 0 -5px 0 rgba(196, 126, 47, 0.16); }
+      50% { background: #ffe2df; box-shadow: 0 0 0 5px rgba(232, 70, 63, 0.18), inset 0 -5px 0 rgba(232, 70, 63, 0.18); }
+    }
+
+    @media (max-width: 620px) {
+      body {
+        padding: 12px;
+      }
+
+      .game {
+        padding: 16px;
+      }
+
+      header {
+        grid-template-columns: 1fr;
+      }
+
+      .scoreboard {
+        justify-content: stretch;
+      }
+
+      .stat {
+        flex: 1;
+      }
+
+      .combo {
+        top: 138px;
+      }
+    }
+
+    /* ─── 回到大地圖按鈕 ─── */
+    .map-link {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 60;
+      min-height: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      border: 2px solid rgba(255, 200, 80, 0.7);
+      border-radius: 999px;
+      background: rgba(104, 65, 31, 0.88);
+      color: #ffe298;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 900;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.28);
+      transition: background 150ms, transform 150ms;
+    }
+
+    .map-link:hover {
+      background: rgba(130, 82, 34, 0.95);
+      transform: translateY(-1px);
+    }
+
+    /* ─── 結果對話框的回到地圖按鈕 ─── */
+    .map-button {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      min-height: 44px;
+      border: 2px solid rgba(255, 200, 80, 0.7);
+      border-radius: 999px;
+      background: rgba(104, 65, 31, 0.9);
+      color: #ffe298;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+      transition: background 150ms;
+    }
+
+    .map-button:hover {
+      background: rgba(130, 82, 34, 0.95);
+    }
+
+    /* ─── 憑證提示 ─── */
+    .cert-note {
+      margin-top: 8px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(50, 154, 92, 0.18);
+      border: 1.5px solid rgba(50, 154, 92, 0.5);
+      color: #8ed9a8;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      display: none;
+    }
+
+    .cert-note.show {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <a class="map-link" href="../大冒險地圖/index.html">← 回到大地圖</a>
+  <main class="game" aria-label="打地鼠遊戲">
+    <header>
+      <h1>打地鼠 🐹</h1>
+      <div class="scoreboard" aria-live="polite">
+        <div class="stat">
+          <span>分數</span>
+          <strong id="score">0</strong>
+        </div>
+        <div class="stat time-card" id="timeCard">
+          <span>倒數</span>
+          <strong><span id="time">30</span>s</strong>
+        </div>
+      </div>
+    </header>
+
+    <div class="controls">
+      <p class="hint">點到地鼠 +10 分，點到空洞 -5 分。時間 30 秒！</p>
+      <button id="startButton" type="button">開始遊戲</button>
+    </div>
+
+    <div class="combo" id="comboText">COMBO x3!</div>
+
+    <section class="field" id="field" aria-label="九宮格地鼠洞">
+      <button class="hole" type="button" aria-label="地鼠洞 1"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 2"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 3"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 4"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 5"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 6"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 7"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 8"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+      <button class="hole" type="button" aria-label="地鼠洞 9"><span class="mole" aria-hidden="true">🐹</span><span class="pop-text plus">+10</span><span class="pop-text minus">-5</span></button>
+    </section>
+  </main>
+
+  <div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="dialog">
+      <h2 id="resultTitle">時間到！</h2>
+      <p id="finalScore">你的分數：0</p>
+      <div class="cert-note" id="certNote">🎉 已獲得「地鼠之印」！回到大地圖查看進度。</div>
+      <button id="restartButton" type="button">重新開始</button>
+      <button class="map-button" id="mapButton" type="button">← 回到大地圖</button>
+    </div>
+  </div>
+
+  <script>
+    const holes = [...document.querySelectorAll(".hole")];
+    const scoreEl = document.querySelector("#score");
+    const timeEl = document.querySelector("#time");
+    const timeCard = document.querySelector("#timeCard");
+    const startButton = document.querySelector("#startButton");
+    const restartButton = document.querySelector("#restartButton");
+    const overlay = document.querySelector("#overlay");
+    const finalScore = document.querySelector("#finalScore");
+    const comboText = document.querySelector("#comboText");
+
+    const gameLength = 30;
+    const moleVisibleTime = 1500;
+
+    let score = 0;
+    let timeLeft = gameLength;
+    let activeHole = null;
+    let gameRunning = false;
+    let tickTimer = null;
+    let moleTimer = null;
+    let combo = 0;
+    let audioContext = null;
+
+    function getAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioContext.state === "suspended") {
+        audioContext.resume();
+      }
+      return audioContext;
+    }
+
+    function playTone({ frequency, type = "sine", duration = 0.12, gain = 0.08, slideTo = null }) {
+      const ctx = getAudioContext();
+      const oscillator = ctx.createOscillator();
+      const volume = ctx.createGain();
+      const now = ctx.currentTime;
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(frequency, now);
+      if (slideTo) {
+        oscillator.frequency.exponentialRampToValueAtTime(slideTo, now + duration);
+      }
+
+      volume.gain.setValueAtTime(0.001, now);
+      volume.gain.exponentialRampToValueAtTime(gain, now + 0.015);
+      volume.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+      oscillator.connect(volume);
+      volume.connect(ctx.destination);
+      oscillator.start(now);
+      oscillator.stop(now + duration + 0.02);
+    }
+
+    function playPopSound() {
+      playTone({ frequency: 420, slideTo: 760, type: "sine", duration: 0.11, gain: 0.06 });
+      setTimeout(() => playTone({ frequency: 850, type: "triangle", duration: 0.07, gain: 0.035 }), 50);
+    }
+
+    function playHitSound() {
+      playTone({ frequency: 170, slideTo: 80, type: "square", duration: 0.11, gain: 0.07 });
+      setTimeout(() => playTone({ frequency: 520, slideTo: 280, type: "triangle", duration: 0.12, gain: 0.04 }), 35);
+    }
+
+    function playMissSound() {
+      playTone({ frequency: 360, slideTo: 180, type: "sawtooth", duration: 0.18, gain: 0.04 });
+      if ("speechSynthesis" in window) {
+        const voice = new SpeechSynthesisUtterance("哎呀");
+        voice.lang = "zh-TW";
+        voice.volume = 0.55;
+        voice.rate = 1.25;
+        window.speechSynthesis.cancel();
+        window.speechSynthesis.speak(voice);
+      }
+    }
+
+    function playTickSound() {
+      playTone({ frequency: 920, type: "square", duration: 0.045, gain: 0.025 });
+    }
+
+    function updateBoard() {
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+      timeCard.classList.toggle("warning", gameRunning && timeLeft <= 10);
+    }
+
+    function clearMole() {
+      if (moleTimer) {
+        clearTimeout(moleTimer);
+        moleTimer = null;
+      }
+
+      if (activeHole) {
+        activeHole.classList.remove("up", "hit");
+        activeHole = null;
+      }
+    }
+
+    function showScoreText(hole, type) {
+      const className = type === "plus" ? "show-plus" : "show-minus";
+      hole.classList.remove("show-plus", "show-minus");
+      void hole.offsetWidth;
+      hole.classList.add(className);
+      setTimeout(() => hole.classList.remove(className), 780);
+    }
+
+    function makeParticles(hole, amount = 14, comboMode = false) {
+      const colors = comboMode
+        ? ["#ff6f91", "#ffd166", "#7bdff2", "#b2f7ef", "#f7a072"]
+        : ["#ffb84d", "#ffe66d", "#8bd66f", "#ff8b8b"];
+
+      for (let index = 0; index < amount; index += 1) {
+        const particle = document.createElement("span");
+        const angle = (Math.PI * 2 * index) / amount;
+        const distance = comboMode ? 92 + Math.random() * 34 : 58 + Math.random() * 26;
+        particle.className = "particle";
+        particle.style.setProperty("--x", `${Math.cos(angle) * distance}px`);
+        particle.style.setProperty("--y", `${Math.sin(angle) * distance}px`);
+        particle.style.setProperty("--particle-color", colors[index % colors.length]);
+        hole.appendChild(particle);
+        setTimeout(() => particle.remove(), 760);
+      }
+    }
+
+    function flyMoleHead(hole) {
+      const mole = hole.querySelector(".mole");
+      const rect = mole.getBoundingClientRect();
+      const flying = document.createElement("span");
+      flying.className = "flying-mole";
+      flying.textContent = "🐹";
+      flying.style.left = `${rect.left + rect.width / 2}px`;
+      flying.style.top = `${rect.top + rect.height / 2}px`;
+      flying.style.setProperty("--size", `${rect.width}px`);
+      flying.style.setProperty("--fly-x", `${Math.random() > 0.5 ? 95 : -95}px`);
+      document.body.appendChild(flying);
+      setTimeout(() => flying.remove(), 720);
+    }
+
+    function showCombo(hole) {
+      comboText.textContent = `COMBO x${combo}!`;
+      comboText.classList.remove("show");
+      void comboText.offsetWidth;
+      comboText.classList.add("show");
+      makeParticles(hole, 24, true);
+      playTone({ frequency: 680, slideTo: 980, type: "triangle", duration: 0.1, gain: 0.05 });
+      setTimeout(() => playTone({ frequency: 980, slideTo: 1220, type: "triangle", duration: 0.1, gain: 0.04 }), 80);
+    }
+
+    function shakeScreen() {
+      document.body.classList.remove("shake");
+      void document.body.offsetWidth;
+      document.body.classList.add("shake");
+      setTimeout(() => document.body.classList.remove("shake"), 280);
+    }
+
+    function pickHole() {
+      const choices = holes.filter((hole) => hole !== activeHole);
+      return choices[Math.floor(Math.random() * choices.length)];
+    }
+
+    function popMole() {
+      if (!gameRunning) return;
+
+      clearMole();
+      activeHole = pickHole();
+      activeHole.classList.add("up");
+      playPopSound();
+
+      moleTimer = setTimeout(() => {
+        clearMole();
+        if (gameRunning) popMole();
+      }, moleVisibleTime);
+    }
+
+    function startGame() {
+      getAudioContext();
+      score = 0;
+      timeLeft = gameLength;
+      combo = 0;
+      gameRunning = true;
+      overlay.classList.remove("show");
+      startButton.textContent = "遊戲中...";
+      startButton.disabled = true;
+      comboText.classList.remove("show");
+      updateBoard();
+      clearMole();
+      popMole();
+
+      clearInterval(tickTimer);
+      tickTimer = setInterval(() => {
+        timeLeft -= 1;
+        if (timeLeft <= 10 && timeLeft > 0) {
+          playTickSound();
+        }
+        updateBoard();
+
+        if (timeLeft <= 0) {
+          endGame();
+        }
+      }, 1000);
+    }
+
+    function endGame() {
+      gameRunning = false;
+      clearInterval(tickTimer);
+      tickTimer = null;
+      combo = 0;
+      clearMole();
+      updateBoard();
+      startButton.textContent = "開始遊戲";
+      startButton.disabled = false;
+      finalScore.textContent = `你的分數：${score}`;
+
+      // ── 儲存地鼠憑證 ──
+      localStorage.setItem("cert_mole", "true");
+      const certNote = document.querySelector("#certNote");
+      certNote.classList.add("show");
+
+      overlay.classList.add("show");
+    }
+
+    holes.forEach((hole) => {
+      hole.addEventListener("click", () => {
+        if (!gameRunning) return;
+
+        if (hole === activeHole) {
+          const hitHole = hole;
+          score += 10;
+          combo += 1;
+          activeHole = null;
+          clearTimeout(moleTimer);
+          moleTimer = null;
+          hitHole.classList.add("hit");
+          showScoreText(hitHole, "plus");
+          makeParticles(hitHole);
+          flyMoleHead(hitHole);
+          playHitSound();
+          if (combo >= 3) {
+            showCombo(hitHole);
+          }
+          updateBoard();
+          setTimeout(() => {
+            hitHole.classList.remove("up", "hit");
+            if (gameRunning) popMole();
+          }, 210);
+          return;
+        }
+
+        score -= 5;
+        combo = 0;
+        showScoreText(hole, "minus");
+        makeParticles(hole, 8);
+        playMissSound();
+        shakeScreen();
+        updateBoard();
+      });
+    });
+
+    startButton.addEventListener("click", startGame);
+    restartButton.addEventListener("click", () => {
+      document.querySelector("#certNote").classList.remove("show");
+      startGame();
+    });
+    document.querySelector("#mapButton").addEventListener("click", () => {
+      window.location.href = "../大冒險地圖/index.html";
+    });
+    updateBoard();
+  </script>
+</body>
+</html>
